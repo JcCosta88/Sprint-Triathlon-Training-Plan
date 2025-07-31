@@ -3,566 +3,670 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Triathlon Training Plan</title>
+    <title>8-Week Sprint Triathlon Training Plan</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Neutrals (Slate/Stone & Cyan) -->
-    <!-- Application Structure Plan: Dashboard with interactive day-of-the-week tabs to filter workout cards. A dedicated visualization section with a donut chart (weekly discipline split) and a bar chart (daily load) provides a high-level overview. This structure is intuitive for a weekly plan and adds value by visualizing data that is hard to glean from text alone. Clicking a workout card now opens a modal with more detailed examples/instructions, including dynamic emoji icons for each exercise. -->
-    <!-- Visualization & Content Choices: 1. Weekly Schedule: Organize -> Interactive Tabs (HTML/JS) -> Intuitive daily navigation. 2. Discipline Split: Compare -> Donut Chart (Chart.js) -> Quick understanding of training balance. 3. Daily Load: Compare -> Bar Chart (Chart.js) -> Shows high/low volume days. 4. Workouts: Inform -> Styled Cards with Icons -> Scannable and clear. 5. Workout Details: Inform/Guide -> Modal window with expanded text/examples + dynamic emoji icons -> Provides actionable detail and visual context on interaction. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d3748; /* Darker track for professional look */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #6b7280; /* Muted thumb color */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563; /* Darker hover */
+        }
         body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
-            touch-action: manipulation; /* Improves responsiveness for touch */
+            font-family: "Inter", sans-serif;
+            /* Darker, more sophisticated gradient background */
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            color: #e2e8f0; /* Light text for dark background */
         }
-        .chart-container-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 300px;
+        /* Specific styling for workout types for a more professional look */
+        .workout-icon {
+            font-size: 1.8rem; /* Larger icons */
+            line-height: 1; /* Align with text */
+            margin-right: 0.75rem;
+            display: inline-block;
+            vertical-align: middle;
         }
-        @media (min-width: 640px) {
-            .chart-container-wrapper {
-                height: 350px;
-            }
-        }
-        @media (min-width: 1024px) {
-            .chart-container-wrapper {
-                height: 400px;
-            }
-        }
-        /* Modal specific styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.75);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background-color: #ffffff;
-            border-radius: 0.75rem; /* rounded-xl */
-            padding: 1.5rem; /* p-6 */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
-            width: 90%; /* Responsive width */
-            max-width: 700px; /* Max width for larger screens */
-            max-height: 90vh; /* Max height to fit screen */
-            overflow-y: auto; /* Scroll if content overflows */
-            position: relative;
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
-        }
-        .modal-close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            line-height: 1;
-            cursor: pointer;
-            color: #475569; /* slate-600 */
-            transition: color 0.2s;
-        }
-        .modal-close-button:hover {
-            color: #0891b2; /* cyan-600 */
-        }
-        /* Specific styling for details within modal to handle newlines */
-        .modal-details-text {
-            white-space: pre-wrap; /* Preserve whitespace and handle newlines */
-        }
-        .exercise-item {
-            display: flex;
-            align-items: flex-start; /* Align text to top if multiple lines */
-            margin-bottom: 0.75rem; /* Space between items */
-            font-size: 0.95rem; /* Slightly smaller for detailed list */
-            line-height: 1.4;
-        }
-        .exercise-icon {
-            font-size: 1.5rem; /* Large enough to be visible */
-            line-height: 1; /* Match text line height */
-            margin-right: 0.5rem; /* Space between icon and text */
-            flex-shrink: 0; /* Prevent icon from shrinking */
-        }
+        /* Custom colors for better contrast on dark background */
+        .text-blue-400 { color: #60a5fa; }
+        .text-green-400 { color: #4ade80; }
+        .text-red-400 { color: #f87171; } /* Adjusted red */
+        .text-purple-400 { color: #c084fc; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-yellow-400 { color: #facc15; }
+        .text-orange-400 { color: #fb923c; }
+        .text-gray-300 { color: #d1d5db; }
+        .text-gray-500 { color: #6b7280; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-6">
 
-    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">Sprint Triathlon Training Plan</h1>
-            <p class="mt-2 text-lg text-slate-600">Your interactive guide to a ~12-hour training week.</p>
-        </header>
+    <div class="container mx-auto max-w-4xl bg-gray-800 rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-10 my-8 border border-gray-700">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-center mb-6 leading-tight">
+            <span class="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">8-Week Sprint Triathlon</span>
+            <span class="block text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-400">Training Plan</span>
+        </h1>
+        <p class="text-center text-lg text-gray-400 mb-10 max-w-2xl mx-auto">
+            Your interactive guide to preparing for a sprint distance triathlon. Track your progress and stay motivated!
+        </p>
 
-        <main>
-            <section id="visualizations" class="mb-12">
-                <h2 class="text-2xl font-bold text-center mb-6 text-slate-900">Weekly Overview</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-between">
-                        <h3 class="text-lg font-semibold text-center mb-4">Weekly Time Distribution</h3>
-                        <div class="chart-container-wrapper">
-                            <canvas id="disciplineChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-between">
-                        <h3 class="text-lg font-semibold text-center mb-4">Daily Training Load (Minutes)</h3>
-                        <div class="chart-container-wrapper">
-                            <canvas id="dailyLoadChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <!-- Week Navigation -->
+        <div class="flex flex-wrap justify-center gap-3 mb-8 p-4 bg-gray-700 rounded-2xl shadow-inner">
+            <!-- Buttons will be dynamically generated here -->
+        </div>
 
-            <section id="schedule">
-                <h2 class="text-2xl font-bold text-center mb-6 text-slate-900">Daily Workout Schedule</h2>
-                <div id="day-tabs" class="flex flex-wrap justify-center gap-2 mb-8">
-                </div>
+        <!-- Weekly Notes Section -->
+        <div id="weekly-note" class="bg-yellow-800 bg-opacity-30 border-l-4 border-yellow-500 text-yellow-200 p-4 rounded-lg mb-8 shadow-md">
+            <p class="font-semibold text-lg mb-2">Weekly Focus:</p>
+            <p id="weekly-note-text" class="text-base"></p>
+        </div>
 
-                <div id="workout-details" class="space-y-6">
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Workout Details Modal -->
-    <div id="workoutModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <button class="modal-close-button" id="closeModalBtn">✖</button>
-            <h3 id="modalWorkoutTitle" class="text-2xl font-bold text-slate-900 mb-4"></h3>
-            <p id="modalWorkoutDisciplineTime" class="text-md font-medium text-cyan-700 bg-cyan-50 px-3 py-1 rounded-full inline-block mb-4"></p>
-            <p id="modalWorkoutDetails" class="text-slate-700 mb-6"></p>
-            <div id="modalWorkoutExamples" class="bg-slate-100 p-4 rounded-lg text-slate-700"></div>
+        <!-- Daily Workouts -->
+        <div id="daily-workouts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Workout cards will be dynamically generated here -->
         </div>
     </div>
 
-
     <script>
-        const trainingData = {
-            Monday: {
-                totalMinutes: 105,
-                workouts: [
-                    { time: 'Morning', discipline: 'Strength', icon: '💪', duration: 60, title: 'Strength 1: Full Body & Power', details: 'Focus on compound movements (squats, deadlifts, presses, rows). Incorporate plyometrics (box jumps, medicine ball slams) for explosive power relevant to all disciplines.',
-                      detailedExamples: [
-                        { text: 'Suggested exercises (3-4 sets of 8-12 reps):' },
-                        { text: 'Goblet Squats: 3 sets of 10-12 reps. Focus on depth and control.', icon: '🏋️‍♀️' },
-                        { text: 'Push-ups: 3 sets to failure. Modify on knees or elevated surface if needed.', icon: '🤸‍♂️' },
-                        { text: 'Dumbbell Rows: 3 sets of 10-12 reps per arm. Keep back straight, pull elbow towards ceiling.', icon: '🏋️‍♂️' },
-                        { text: 'Overhead Press (Dumbbell or Barbell): 3 sets of 8-10 reps. Press weight directly overhead.', icon: '🏋️' },
-                        { text: 'Box Jumps: 3 sets of 5-8 reps. Focus on soft landing and controlled descent.', icon: '⬆️' },
-                        { text: 'Medicine Ball Slams: 3 sets of 8-10 reps. Use a heavy ball, slam with full body power.', icon: '🏀' }
-                      ]
+        // Data for the 8-week sprint triathlon training plan
+        // Each week object contains a 'note' and an array of 'days'
+        // Each day object contains a 'day' (e.g., "Monday"), and an array of 'workouts'
+        // Each workout object has a 'type' (e.g., "SWIM", "BIKE"), 'details', and 'id' for tracking
+        const trainingPlan = [
+            {
+                week: 1,
+                note: "Time to get started. Your plan begins on a Monday, but you can start on any day of the week.",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w1d1w0", type: "GYM", details: "Morning: Upper Body & Core Strength (30-45 mins). Focus on pull-ups/lat pulldowns, push-ups/chest press, planks, Russian twists." },
+                            { id: "w1d1w1", type: "SWIM", details: "750m time trial. Swim as hard as sustainably possible for the distance. Record time." }
+                        ]
                     },
-                    { time: 'Afternoon/Evening', discipline: 'Run', icon: '🏃', duration: 45, title: 'Run 1: Speed/Intervals', details: 'After warm-up, perform 8-10 repetitions of 2-3 minute hard efforts (RPE 8-9, faster than race pace), with 1-2 minutes of easy jogging for recovery.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy jog warm-up:' },
-                        { text: 'Main Set: 8 x 2 minutes at 5k race pace effort (RPE 8-9) with 90 seconds easy jog recovery between each. Focus on maintaining good running form even at high speed, keeping your cadence high.', icon: '⏱️' },
-                        { text: 'Cool-down: 5-10 minutes easy jog/walk.' }
-                      ]
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w1d2w0", type: "GYM", details: "Morning: Leg Strength & Power (30-45 mins). Focus on squats, lunges, deadlifts (light), calf raises." },
+                            { id: "w1d2w1", type: "BIKE", details: "20km time trial. Bike as hard as sustainably possible. Record time." }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w1d3w0", type: "GYM", details: "Morning: Full Body & Stability (30-45 mins). Focus on burpees, kettlebell swings, single-leg balance, medicine ball throws." },
+                            { id: "w1d3w1", type: "RUN", details: "6 x 1km vigorous; 45 seconds rest." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w1d4w1", type: "SWIM", details: "1 x 300m moderate, 2 x 150m hard; 3 x 100m vigorous; 6 x 50m hard; 40 seconds rest between reps." },
+                            { id: "w1d4w2", type: "BIKE", details: "Repeat 5 times." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w1d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w1d6w1", type: "SWIM", details: "200m moderate, 5 x 200m TT pace; 30 seconds rest; 200m moderate." },
+                            { id: "w1d6w2", type: "RUN TT", details: "5km time trial; run as hard as possible; record time." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w1d7w1", type: "BIKE", details: "30-40km moderate on a flat route." }
+                        ]
                     }
                 ]
             },
-            Tuesday: {
-                totalMinutes: 105,
-                workouts: [
-                    { time: 'Morning', discipline: 'Strength', icon: '💪', duration: 45, title: 'Strength 2: Core & Stability', details: 'Deeper core work, including anti-rotation, anti-extension, and single-leg stability exercises. A strong core is vital for efficient power transfer and injury prevention.',
-                      detailedExamples: [
-                        { text: 'Suggested exercises (3 sets of 10-15 reps or 30-60 second holds):' },
-                        { text: 'Plank: 3 sets, 60 seconds hold. Keep body in a straight line.', icon: '🧘' },
-                        { text: 'Side Plank: 3 sets, 30 seconds per side. Engage obliques, don\'t let hips drop.', icon: '🧘‍♀️' },
-                        { text: 'Bird-Dog: 3 sets of 10-12 reps per side. Keep core stable, minimize hip rocking.', icon: '🐕‍🦺' },
-                        { text: 'Dead Bug: 3 sets of 10-12 reps per side. Keep lower back pressed to floor.', icon: '🐞' },
-                        { text: 'Glute Bridges: 3 sets of 15-20 reps. Squeeze glutes at the top.', icon: '🍑' }
-                      ]
+            {
+                week: 2,
+                note: "Having completed time trials in Week 1, use these results to set the intensity for all future intervals.",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w2d1w0", type: "GYM", details: "Morning: Upper Body & Core Strength (30-45 mins). Focus on rows, overhead press, planks, leg raises." },
+                            { id: "w2d1w1", type: "SWIM", details: "10 x 100m TT pace; 30 seconds rest between each." }
+                        ]
                     },
-                    { time: 'Afternoon/Evening', discipline: 'Bike', icon: '🚴', duration: 60, title: 'Bike 1: Cadence & Speed Drills', details: '20 minutes of cadence drills (alternating 3 min high cadence 95-105+ RPM with 2 min normal). Then, 8-10 x 1-minute hard efforts (RPE 8-9) with 2 minutes easy spinning recovery.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy spin warm-up:' },
-                        { text: 'Cadence Drills: 4 rounds of (3 minutes at very light resistance, 100+ RPM + 2 minutes at moderate resistance, 85-90 RPM). Focus on smooth, efficient circles.', icon: '⚙️' },
-                        { text: 'Intervals: 8 x 1 minute hard effort (RPE 8-9, pushing hard but sustainable) with 2 minutes easy spinning recovery. Maintain good posture.', icon: '⚡' }
-                      ]
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w2d2w0", type: "GYM", details: "Morning: Leg Strength & Power (30-45 mins). Focus on step-ups, box jumps (low), single-leg deadlifts, glute bridges." },
+                            { id: "w2d2w1", type: "RUN", details: "6-7km easy; treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w2d3w0", type: "GYM", details: "Morning: Full Body & Stability (30-45 mins). Focus on burpees, medicine ball slams, bird-dog, farmer's carry." },
+                            { id: "w2d3w1", type: "BIKE", details: "4 x (4mins TT pace / 1min easy); 2mins easy; 3 x (3mins TT pace / 1min easy); 2mins easy." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w2d4w1", type: "RUN", details: "8 x 800m TT pace, 40 seconds rest between reps." },
+                            { id: "w2d4w2", type: "SWIM", details: "2 x (2mins TT pace / 1min easy); 90 seconds rest between reps." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w2d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w2d6w1", type: "BRICK", details: "Repeat 3 times: 10min bike vigorous, 4min run moderate." },
+                            { id: "w2d6w2", type: "SWIM", details: "4 x 300m moderate; increase pace for final 100m; 20 seconds rest between reps." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w2d7w1", type: "RUN", details: "3 x (1km easy / 1km TT pace); No rest between sets." },
+                            { id: "w2d7w2", type: "BIKE", details: "40km moderate on a flat route. Include 2 x 8km efforts TT pace." }
+                        ]
                     }
                 ]
             },
-            Wednesday: {
-                totalMinutes: 105,
-                workouts: [
-                    { time: 'Morning', discipline: 'Strength', icon: '💪', duration: 45, title: 'Strength 3: Upper Body & Swim Specific', details: 'Targeting muscles essential for swimming (lats, triceps, shoulders, upper back). Include exercises like pull-ups, dumbbell pullovers, triceps dips, and resistance band work simulating swim strokes.',
-                      detailedExamples: [
-                        { text: 'Suggested exercises (3-4 sets of 8-12 reps):' },
-                        { text: 'Pull-ups (or Lat Pulldowns): 3 sets to failure/10-12 reps. Focus on engaging your lats.', icon: '🤸‍♂️' },
-                        { text: 'Dumbbell Pullovers: 3 sets of 10-12 reps. Focus on chest and lats stretch.', icon: '💪' },
-                        { text: 'Triceps Dips (Bench or Parallel Bar): 3 sets to failure/10-15 reps. Keep elbows tucked.', icon: '🤸‍♀️' },
-                        { text: 'Resistance Band Swim Pulls: Mimic the freestyle stroke motion with bands. 3 sets of 15-20 pulls per arm.', icon: '🏊' },
-                        { text: 'Face Pulls (with band or cable): 3 sets of 15-20 reps. Great for shoulder health and upper back.', icon: '↔️' }
-                      ]
+            {
+                week: 3,
+                note: "Double days continue and should be completed with plenty of recovery in between.",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w3d1w0", type: "GYM", details: "Morning: Upper Body & Core Strength (30-45 mins). Focus on band pull-aparts, triceps dips, hollow body holds, dead bugs." },
+                            { id: "w3d1w1", type: "SWIM", details: "10 x 100m TT pace; take 25 seconds rest between reps." }
+                        ]
                     },
-                    { time: 'Afternoon/Evening', discipline: 'Swim', icon: '🏊', duration: 60, title: 'Swim 1: Speed & Race Pace', details: '3-4 rounds of 4x75m at Sprint Race Pace (RPE 8-9) with 30-45s rest. Then, 4x150m strong effort (RPE 7-8). Finish with 4-6 x 25m all-out sprints.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy swim warm-up with sculling:' },
-                        { text: 'Main Set: 3 rounds: [4 x 75m at your target Sprint race pace (RPE 8-9) with 30s rest] then 100m easy recovery. Then, 4 x 150m strong effort (RPE 7-8) with 45s rest.', icon: '🌊' },
-                        { text: 'Finisher: 5 x 25m all-out sprints from a push-off with 60-90s rest. Focus on maximum speed and power off the wall.', icon: '🚀' }
-                      ]
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w3d2w0", type: "GYM", details: "Morning: Leg Strength & Power (30-45 mins). Focus on goblet squats, walking lunges, single-leg hops, wall sits." },
+                            { id: "w3d2w1", type: "RUN", details: "6-7km easy; treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w3d3w0", type: "GYM", details: "Morning: Full Body & Stability (30-45 mins). Focus on push press, bent-over rows, planks with shoulder taps, bird-dog crunches." },
+                            { id: "w3d3w1", type: "BIKE", details: "4 x (14mins TT pace / 1min easy); 2mins easy; 3 x (3mins TT pace / 1min easy); 2mins easy." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w3d4w1", type: "RUN", details: "8 x 800m TT pace; 30 seconds rest between sets." },
+                            { id: "w3d4w2", type: "SWIM", details: "2 x (2mins TT pace / 1min easy); 90 seconds rest between reps." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w3d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w3d6w1", type: "BRICK", details: "Repeat 3 times: 12min bike vigorous, 5min run moderate." },
+                            { id: "w3d6w2", type: "SWIM", details: "4 x 350m moderate; increase pace for final 100m; 20 seconds rest between reps." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w3d7w1", type: "RUN", details: "3 x (1km easy / 1.2km TT pace)." },
+                            { id: "w3d7w2", type: "BIKE", details: "40km moderate on a flat route. Include 3 x 6km efforts TT pace." }
+                        ]
                     }
                 ]
             },
-            Thursday: {
-                totalMinutes: 105,
-                workouts: [
-                    { time: 'Morning', discipline: 'Strength', icon: '💪', duration: 45, title: 'Strength 4: Lower Body Focus', details: 'Dedicated to strengthening your legs. Include lunges, single-leg Romanian deadlifts, glute bridges, step-ups, and calf raises for increased power in cycling and running.',
-                      detailedExamples: [
-                        { text: 'Suggested exercises (3-4 sets of 8-12 reps per leg/side):' },
-                        { text: 'Walking Lunges (Dumbbells optional): 3 sets of 10-12 reps per leg. Focus on controlled movement.', icon: '🚶' },
-                        { text: 'Single-Leg Romanian Deadlifts (Dumbbell): 3 sets of 8-10 reps per leg. Keep core tight, slight bend in standing knee.', icon: '🦵' },
-                        { text: 'Glute Bridges with March: 3 sets of 10-12 marches per leg. Keep hips high and stable.', icon: '🍑' },
-                        { text: 'Step-ups onto a Bench: 3 sets of 10-12 reps per leg. Drive up through the heel.', icon: '⬆️' },
-                        { text: 'Calf Raises (Standing or Seated): 3 sets of 15-20 reps. Full range of motion.', icon: '👟' }
-                      ]
+            {
+                week: 4,
+                note: "Where possible, do the swim sessions in open water and focus on key skills.",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w4d1w0", type: "GYM", details: "Morning: Upper Body & Core Strength (30-45 mins). Focus on resistance band rows, dumbbell press, side planks, bird-dog." },
+                            { id: "w4d1w1", type: "SWIM", details: "8 x 100m TT pace; 40 seconds rest between reps." }
+                        ]
                     },
-                    { time: 'Afternoon/Evening', discipline: 'Bike', icon: '🚴', duration: 60, title: 'Bike 2: Race Pace Efforts', details: 'Execute 3 rounds of 12-15 minutes at Sprint Race Pace Effort (RPE 7-8), with 5 minutes easy spinning recovery between each. This should feel like a strong, continuous push.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy spin warm-up:' },
-                        { text: 'Main Set: 3 rounds of (15 minutes at Sprint Race Pace effort - RPE 7-8, sustained hard push) followed by 5 minutes easy spinning recovery. Focus on maintaining a consistent power output or speed.', icon: '💨' },
-                        { text: 'Cool-down: 5 minutes easy spin.' }
-                      ]
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w4d2w0", type: "GYM", details: "Morning: Leg Strength & Power (30-45 mins). Focus on split squats, calf raises, glute kickbacks, step-ups." },
+                            { id: "w4d2w1", type: "RUN", details: "4-5km easy; treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w4d3w0", type: "GYM", details: "Morning: Full Body & Stability (30-45 mins). Focus on renegade rows, push-up variations, stability ball crunches, superman." },
+                            { id: "w4d3w1", type: "BIKE", details: "4 x (13mins TT pace / 2mins easy); 2mins easy; 3 x (2mins TT pace / 2mins easy); 2mins easy; 2 x (1min TT pace / 2mins easy)." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w4d4w1", type: "RUN", details: "6 x 800m TT pace; 40 seconds rest between sets." },
+                            { id: "w4d4w2", type: "SWIM", details: "3 x 400m moderate; Increase pace for final 100m; 20 seconds rest between reps." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w4d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w4d6w1", type: "BRICK", details: "Repeat 3 times: 12min bike vigorous, 5min run moderate; 90 seconds rest between reps." },
+                            { id: "w4d6w2", type: "SWIM", details: "200m moderate; 6 x 150m TT pace: 20 seconds rest between reps; 200m moderate." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w4d7w1", type: "RUN", details: "3 x (1km easy / 1.2km TT pace)." },
+                            { id: "w4d7w2", type: "BIKE", details: "30km moderate on a flat route. Include 1 x 10km effort TT pace." }
+                        ]
                     }
                 ]
             },
-            Friday: {
-                totalMinutes: 90,
-                workouts: [
-                    { time: 'Morning', discipline: 'Run', icon: '🏃', duration: 45, title: 'Run 2: Tempo Run', details: 'After warm-up, run for 25-30 minutes at a Tempo Pace (RPE 7-8). This should feel "comfortably hard" – you can speak in short sentences, but not hold a full conversation.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy jog warm-up:' },
-                        { text: 'Main Set: 25-30 minutes at Tempo Pace (RPE 7-8). This pace should be challenging but sustainable. You should be able to speak 3-4 word sentences, but not have a full conversation. Focus on maintaining good form throughout.', icon: '🏃‍♀️' },
-                        { text: 'Cool-down: 5-10 minutes easy jog/walk.' }
-                      ]
+            {
+                week: 5,
+                note: "Don't forget to refuel properly in between the 'double day' sessions.",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w5d1w0", type: "GYM", details: "Morning: Upper Body & Core Strength (30-45 mins). Focus on inverted rows, incline push-ups, bicycle crunches, planks." },
+                            { id: "w5d1w1", type: "SWIM", details: "10 x 100m TT pace, 20 seconds rest between reps." }
+                        ]
                     },
-                    { time: 'Afternoon/Evening', discipline: 'Bike', icon: '🚴', duration: 45, title: 'Bike 3: Race Prep', details: 'A dynamic mix of efforts. Example: 4-5 rounds of 5 min moderate (RPE 6-7), followed by 1 min hard (RPE 8-9), then 2 min easy recovery.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy spin warm-up:' },
-                        { text: 'Main Set: 4 rounds of (5 minutes moderate effort (RPE 6-7) + 1 minute hard push (RPE 8-9) + 2 minutes easy recovery). This session primes your legs for the weekend without exhausting them.', icon: '⚡' }
-                      ]
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w5d2w0", type: "GYM", details: "Morning: Leg Strength & Power (30-45 mins). Focus on Bulgarian split squats, single-leg Romanian deadlifts, plyometric lunges." },
+                            { id: "w5d2w1", type: "RUN", details: "6-7km easy, treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w5d3w0", type: "GYM", details: "Morning: Full Body & Stability (30-45 mins). Focus on burpee broad jumps, medicine ball Russian twists, stability ball rollouts." },
+                            { id: "w5d3w1", type: "BIKE", details: "Repeat 5 times: 6mins TT pace / 1min easy. Practise riding in an aero position." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w5d4w1", type: "RUN", details: "1km moderate, 8 x 600m TT pace, 30 seconds rest between reps; 1km moderate." },
+                            { id: "w5d4w2", type: "SWIM", details: "1,500m; switch pace between vigorous and easy each 100m." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w5d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w5d6w1", type: "BIKE", details: "Repeat 3 times: 10mins moderate / 2mins TT pace / 3mins easy." },
+                            { id: "w5d6w2", type: "BRICK", details: "1km open-water swim, 6km run. Aim to swim at a moderate pace followed by a vigorous run." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w5d7w1", type: "BIKE", details: "40km moderate on a flat route. Include 3 x 8km efforts TT Pace." }
+                        ]
                     }
                 ]
             },
-            Saturday: {
-                totalMinutes: 195,
-                workouts: [
-                    { time: 'Morning', discipline: 'Swim', icon: '🏊', duration: 60, title: 'Swim 2: Technique & Sighting', details: 'Dedicate 25-30 minutes to drills. Crucially, include open water specific drills such as 8-10 x 100m with sighting every 6-8 strokes. Conclude with a 500m continuous swim.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy swim warm-up:' },
-                        { text: 'Drill Work (25 min): Focus on catch-up drill, single-arm drill, and kicking with a board. Then, practice sighting: 8-10 x 100m, looking up every 6-8 strokes to spot a point.', icon: '👀' },
-                        { text: 'Main Set: 500m continuous swim at a comfortable pace (RPE 5-6), incorporating sighting every 2-3 laps.', icon: '♾️' },
-                        { text: 'Cool-down: 5 minutes easy swim.' }
-                      ]
+            {
+                week: 6,
+                note: "Always include a good 4-5 min warm-up and 3-5 min cool-down for all sessions.",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w6d1w0", type: "GYM", details: "Morning: Upper Body & Core Strength (30-45 mins). Focus on assisted pull-ups, dumbbell rows, ab rollouts, side planks." },
+                            { id: "w6d1w1", type: "SWIM", details: "5 x 150m TT pace, 15 seconds rest between reps; 8 x 50m sprint; 15 seconds rest between reps." }
+                        ]
                     },
-                    { time: 'Afternoon/Evening', discipline: 'Bike & Run', icon: '🧱', duration: 135, title: 'Bike 4 + Brick Run', details: 'Bike: 1 hour 45 minutes at a steady, moderate pace (RPE 5-6). Brick Run: Immediately transition to a 30-minute easy to moderate run (RPE 4-6). This is your most crucial race simulation.',
-                      detailedExamples: [
-                        { text: 'After a 10-minute easy spin warm-up on the bike:' },
-                        { text: 'Bike Portion: 1 hour 45 minutes. Maintain a steady, moderate pace. During the last 30 minutes, include 4-5 short, harder pushes (2-3 min at RPE 7-8) to simulate race effort.', icon: '🚴‍♀️' },
-                        { text: 'Transition (T2): Practice getting out of your bike shoes and into your running shoes quickly. Aim for under 60 seconds.', icon: '👟' },
-                        { text: 'Run Portion: 30 minutes at an easy to moderate pace (RPE 4-6). Expect your legs to feel heavy ("jelly legs") at first, but try to find a smooth running rhythm.', icon: '🧱' }
-                      ]
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w6d2w0", type: "GYM", details: "Morning: Leg Strength & Power (30-45 mins). Focus on pistol squats (assisted), broad jumps, kettlebell swings, calf raises." },
+                            { id: "w6d2w1", type: "RUN EASY", details: "6-7km easy; treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w6d3w0", type: "GYM", details: "Morning: Full Body & Stability (30-45 mins). Focus on thrusters, mountain climbers, plank jacks, bicycle crunches." },
+                            { id: "w6d3w1", type: "BIKE", details: "Repeat 5 times: 7mins TT pace / 1min easy. Practise riding in an aero position." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w6d4w1", type: "RUN", details: "1km moderate; 8 x 600m TT pace; 25 seconds rest btw reps; 1km moderate." },
+                            { id: "w6d4w2", type: "SWIM", details: "3 x 400m easy, increase pace for final 100m, 20 seconds rest btw. reps." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w6d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w6d6w1", type: "BIKE", details: "Repeat 3 times: 10mins moderate / 2mins TT pace / 3mins easy." },
+                            { id: "w6d6w2", type: "SWIM", details: "1,500m. Include 2 x 400m efforts at faster-than-race pace. Focus on improving 'sighting' by swimming with head up." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w6d7w1", type: "BRICK", details: "25km bike, 5km run. Bike moderate then run at desired race pace." }
+                        ]
                     }
                 ]
             },
-            Sunday: {
-                totalMinutes: 0,
-                workouts: [
-                    { time: 'All Day', discipline: 'Recovery', icon: '😴', duration: 0, title: 'Full Recovery Day', details: 'Rest is critical for muscle repair, energy replenishment, and preventing burnout. Use this day for active rest (gentle stretching, light walking) or complete rest.',
-                      detailedExamples: [
-                        { text: 'Activities for a full recovery day:' },
-                        { text: '- Complete Rest: No structured exercise. Focus on sleep and nutrition.' },
-                        { text: '- Light Walk: 20-30 minutes at a very easy pace.', icon: '🚶‍♂️' },
-                        { text: '- Foam Rolling / Stretching: 15-30 minutes focusing on major muscle groups.', icon: '🧘‍♂️' },
-                        { text: '- Hydration & Nutrition: Prioritize nutrient-dense foods and plenty of water to aid recovery.', icon: '🍎' }
-                      ]
+            {
+                week: 7,
+                note: "Your final big training week which also includes an almost race-distance brick session.",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w7d1w0", type: "GYM", details: "Morning: Upper Body & Core Strength (30-45 mins). Focus on resistance band rows, dumbbell chest press, V-ups, planks." },
+                            { id: "w7d1w1", type: "SWIM", details: "5 x 150m TT pace: 15 seconds rest between reps; repeat 8 x 50m sprint 15 seconds rest between reps." }
+                        ]
+                    },
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w7d2w0", type: "GYM", details: "Morning: Leg Strength & Power (30-45 mins). Focus on single-leg squats, box jumps, deadlifts (light), calf raises." },
+                            { id: "w7d2w1", type: "RUN", details: "6-7km easy; treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w7d3w0", type: "GYM", details: "Morning: Full Body & Stability (30-45 mins). Focus on burpees, medicine ball slams, bird-dog, farmer's carry." },
+                            { id: "w7d3w1", type: "BIKE", details: "Repeat 5 times: 7mins TT pace / 1min easy. Practise riding in an aero position." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w7d4w1", type: "RUN", details: "1km moderate; 8 x 600m TT pace; 20 seconds rest between reps; 1km moderate." },
+                            { id: "w7d4w2", type: "SWIM", details: "1,600m: switch pace between vigorous and easy each 100m." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w7d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w7d6w1", type: "BIKE", details: "Repeat 3 times: 10mins moderate / 2mins TT pace / 3mins easy." },
+                            { id: "w7d6w2", type: "RUN", details: "3-4km easy." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w7d7w1", type: "BRICK", details: "750m open-water swim; 20km bike, 2km run. Swim at desired race pace then bike as hard as possible followed by a short run. Treat like a recovery run." }
+                        ]
+                    }
+                ]
+            },
+            {
+                week: 8,
+                note: "This week includes two rest days as you taper towards the all-important race!",
+                days: [
+                    {
+                        day: "Monday",
+                        workouts: [
+                            { id: "w8d1w0", type: "GYM", details: "Morning: Light Mobility & Activation (20-30 mins). Focus on foam rolling, dynamic stretches, light core activation." },
+                            { id: "w8d1w1", type: "SWIM", details: "Repeat 6 times: 100m TT pace; 40 seconds rest between reps." }
+                        ]
+                    },
+                    {
+                        day: "Tuesday",
+                        workouts: [
+                            { id: "w8d2w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Wednesday",
+                        workouts: [
+                            { id: "w8d3w0", type: "GYM", details: "Morning: Very Light Activation (15-20 mins). Focus on bodyweight squats, arm circles, leg swings, gentle planks." },
+                            { id: "w8d3w1", type: "RUN", details: "4-5km easy; treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Thursday",
+                        workouts: [
+                            { id: "w8d4w1", type: "BRICK", details: "Repeat 3 times: 7mins bike vigorous, 3min run moderate." },
+                            { id: "w8d4w2", type: "BIKE", details: "Repeat 3 times: 6mins moderate / 1min TT pace / 3mins easy." }
+                        ]
+                    },
+                    {
+                        day: "Friday",
+                        workouts: [
+                            { id: "w8d5w1", type: "REST DAY", details: "Enjoy your rest!" }
+                        ]
+                    },
+                    {
+                        day: "Saturday",
+                        workouts: [
+                            { id: "w8d6w1", type: "RUN", details: "2-3km easy; treat like a recovery run." }
+                        ]
+                    },
+                    {
+                        day: "Sunday",
+                        workouts: [
+                            { id: "w8d7w1", type: "RACE DAY!", details: "750m swim, 20km bike, 5km run. Good luck!" }
+                        ]
                     }
                 ]
             }
-        };
+        ];
 
-        let currentDay = 'Monday';
-        const days = Object.keys(trainingData);
+        // Get DOM elements
+        const weekNav = document.querySelector('.flex.flex-wrap.justify-center.gap-3.mb-8');
+        const weeklyNoteText = document.getElementById('weekly-note-text');
+        const dailyWorkoutsContainer = document.getElementById('daily-workouts');
 
-        function renderTabs() {
-            const tabsContainer = document.getElementById('day-tabs');
-            tabsContainer.innerHTML = '';
-            days.forEach(day => {
-                const isActive = day === currentDay;
-                const button = document.createElement('button');
-                button.textContent = day;
-                button.dataset.day = day;
-                button.className = `px-5 py-3 text-sm sm:text-base font-semibold rounded-full transition-colors duration-200 ${isActive ? 'bg-cyan-600 text-white shadow-lg' : 'bg-white text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50'}`;
-                tabsContainer.appendChild(button);
-            });
+        let currentWeek = 1; // Start with Week 1
+
+        // Function to save completed workouts to local storage
+        function saveProgress(workoutId, isCompleted) {
+            let completedWorkouts = JSON.parse(localStorage.getItem('triathlonProgress')) || {};
+            if (isCompleted) {
+                completedWorkouts[workoutId] = true;
+            } else {
+                delete completedWorkouts[workoutId];
+            }
+            localStorage.setItem('triathlonProgress', JSON.stringify(completedWorkouts));
         }
 
-        function renderWorkouts() {
-            const detailsContainer = document.getElementById('workout-details');
-            detailsContainer.innerHTML = '';
-            const dayData = trainingData[currentDay];
-
-            dayData.workouts.forEach((workout, index) => {
-                const card = `
-                    <div class="group relative p-6 rounded-xl shadow-lg
-                                 bg-gradient-to-br from-slate-50 to-cyan-50
-                                 transform transition-all duration-300
-                                 hover:scale-[1.02] hover:shadow-xl
-                                 active:scale-98 active:shadow-md
-                                 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2
-                                 cursor-pointer overflow-hidden"
-                         data-workout-index="${index}">
-                        <div class="flex items-start">
-                            <div class="text-5xl mr-4 transform transition-transform duration-300 group-hover:scale-110 group-active:scale-100">${workout.icon}</div>
-                            <div class="flex-1">
-                                <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-2">
-                                    <h4 class="text-xl font-bold text-slate-900 group-hover:text-cyan-800 transition-colors duration-300">${workout.title}</h4>
-                                    <span class="text-sm font-medium text-cyan-700 bg-cyan-100 px-3 py-1 rounded-full mt-2 sm:mt-0 shadow-sm">${workout.time}</span>
-                                </div>
-                                <p class="text-slate-700 mb-4 text-base leading-relaxed">${workout.details}</p>
-                                <div class="flex items-center text-sm text-slate-600 font-medium">
-                                    <span>${workout.discipline}</span>
-                                    ${workout.duration > 0 ? `<span class="mx-2 text-slate-400">|</span><span>${workout.duration} minutes</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                detailsContainer.innerHTML += card;
-            });
+        // Function to load completed workouts from local storage
+        function loadProgress(workoutId) {
+            let completedWorkouts = JSON.parse(localStorage.getItem('triathlonProgress')) || {};
+            return completedWorkouts[workoutId] || false;
         }
 
-        function setupTabListener() {
-            const tabsContainer = document.getElementById('day-tabs');
-            tabsContainer.addEventListener('click', (e) => {
-                if (e.target.tagName === 'BUTTON') {
-                    currentDay = e.target.dataset.day;
-                    renderTabs();
-                    renderWorkouts();
-                }
-            });
-        }
+        // Function to render the training plan for the current week
+        function renderWeek(weekNumber) {
+            currentWeek = weekNumber;
+            const weekData = trainingPlan[weekNumber - 1]; // Adjust for 0-based array index
 
-        function setupWorkoutCardListener() {
-            const detailsContainer = document.getElementById('workout-details');
-            detailsContainer.addEventListener('click', (e) => {
-                const card = e.target.closest('[data-workout-index]');
-                if (card) {
-                    const workoutIndex = parseInt(card.dataset.workoutIndex); 
-                    const workout = trainingData[currentDay].workouts[workoutIndex];
-                    
-                    document.getElementById('modalWorkoutTitle').textContent = workout.title;
-                    document.getElementById('modalWorkoutDisciplineTime').textContent = `${workout.discipline} | ${workout.time} ${workout.duration > 0 ? `| ${workout.duration} minutes` : ''}`;
-                    document.getElementById('modalWorkoutDetails').textContent = workout.details;
-                    
-                    const modalExamplesDiv = document.getElementById('modalWorkoutExamples');
-                    modalExamplesDiv.innerHTML = ''; // Clear previous content
+            // Update weekly note
+            weeklyNoteText.textContent = weekData.note;
 
-                    if (workout.detailedExamples) {
-                        workout.detailedExamples.forEach(item => {
-                            // Render text as HTML to support simple formatting (e.g., bolding with <strong>)
-                            // Replaced `**` with `<strong>` tags for proper bold rendering.
-                            let formattedText = item.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                            let itemHtml = `<div class="exercise-item"><span class="exercise-icon">${item.icon || ''}</span><p class="modal-details-text flex-1">${formattedText}</p></div>`;
-                            modalExamplesDiv.innerHTML += itemHtml;
-                        });
-                    }
+            // Clear previous workouts
+            dailyWorkoutsContainer.innerHTML = '';
 
-                    const modal = document.getElementById('workoutModal');
-                    modal.classList.add('show');
-                    modal.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden'; // Prevent scrolling body when modal is open
-                }
-            });
+            // Render daily workouts
+            weekData.days.forEach(day => {
+                const dayCard = document.createElement('div');
+                // Updated card styling for a more professional look
+                dayCard.className = 'bg-gray-700 rounded-2xl shadow-xl p-6 flex flex-col border border-gray-600 hover:shadow-2xl transition-shadow duration-300';
 
-            document.getElementById('closeModalBtn').addEventListener('click', () => {
-                const modal = document.getElementById('workoutModal');
-                modal.classList.remove('show');
-                modal.classList.add('hidden');
-                document.body.style.overflow = ''; // Restore body scrolling
-            });
+                const dayTitle = document.createElement('h3');
+                // Updated day title styling
+                dayTitle.className = 'text-2xl font-bold text-gray-100 mb-4 pb-2 border-b-2 border-blue-500';
+                dayTitle.textContent = day.day;
+                dayCard.appendChild(dayTitle);
 
-            // Close modal when clicking outside content
-            document.getElementById('workoutModal').addEventListener('click', (e) => {
-                if (e.target.id === 'workoutModal') { // Only close if clicking the overlay itself
-                    const modal = document.getElementById('workoutModal');
-                    modal.classList.remove('show');
-                    modal.classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
-            });
-        }
-
-
-        function calculateDisciplineTotals() {
-            const totals = { Swim: 0, Bike: 0, Run: 0, Strength: 0 };
-            Object.values(trainingData).forEach(day => {
                 day.workouts.forEach(workout => {
-                    if (workout.discipline === 'Swim') totals.Swim += workout.duration;
-                    if (workout.discipline === 'Bike') totals.Bike += workout.duration;
-                    if (workout.discipline === 'Run') totals.Run += workout.duration;
-                    if (workout.discipline === 'Strength') totals.Strength += workout.duration;
-                    if (workout.discipline === 'Bike & Run') {
-                        // For the Bike & Run brick, distribute its total duration correctly
-                        // Original plan: Bike (1h45m = 105min), Run (30min) -> Total 135min for the brick workout
-                        // So, add these fixed values to the totals for this specific workout type
-                        totals.Bike += 105; 
-                        totals.Run += 30; 
+                    const workoutDiv = document.createElement('div');
+                    workoutDiv.className = 'flex items-start mb-4';
+
+                    // Checkbox for completion
+                    const checkboxId = `checkbox-${workout.id}`;
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = checkboxId;
+                    // Updated checkbox styling
+                    checkbox.className = 'mt-1 mr-3 h-5 w-5 text-blue-500 rounded border-gray-500 focus:ring-blue-400 focus:ring-opacity-75 cursor-pointer bg-gray-600';
+                    checkbox.checked = loadProgress(workout.id); // Load saved state
+                    checkbox.addEventListener('change', (event) => {
+                        saveProgress(workout.id, event.target.checked);
+                        workoutText.classList.toggle('line-through', event.target.checked);
+                        workoutText.classList.toggle('text-gray-500', event.target.checked);
+                        workoutText.classList.toggle('text-gray-300', !event.target.checked); // Changed from text-gray-700
+                    });
+                    workoutDiv.appendChild(checkbox);
+
+                    const workoutContent = document.createElement('div');
+                    workoutContent.className = 'flex-1';
+
+                    const workoutType = document.createElement('span');
+                    let typeColorClass = '';
+                    let icon = '';
+                    switch (workout.type) {
+                        case 'SWIM':
+                            typeColorClass = 'text-blue-400';
+                            icon = '🏊';
+                            break;
+                        case 'BIKE':
+                            typeColorClass = 'text-green-400';
+                            icon = '�';
+                            break;
+                        case 'RUN':
+                        case 'RUN TT':
+                        case 'RUN EASY':
+                            typeColorClass = 'text-red-400'; /* Custom red for better contrast */
+                            icon = '🏃';
+                            break;
+                        case 'BRICK':
+                            typeColorClass = 'text-purple-400';
+                            icon = '🧱';
+                            break;
+                        case 'REST DAY':
+                            typeColorClass = 'text-gray-400';
+                            icon = '🛌';
+                            break;
+                        case 'RACE DAY!':
+                            typeColorClass = 'text-yellow-400';
+                            icon = '🏁';
+                            break;
+                        case 'GYM':
+                            typeColorClass = 'text-orange-400';
+                            icon = '💪';
+                            break;
+                        default:
+                            typeColorClass = 'text-gray-300';
+                            icon = '🏋️';
                     }
+                    // Added workout-icon class for styling
+                    workoutType.className = `font-semibold ${typeColorClass} text-lg workout-icon`;
+                    workoutType.textContent = `${icon} ${workout.type}: `;
+                    workoutContent.appendChild(workoutType);
+
+                    const workoutText = document.createElement('span');
+                    // Changed default text color for dark background
+                    workoutText.className = `text-gray-300 text-base ${checkbox.checked ? 'line-through text-gray-500' : ''}`;
+                    workoutText.textContent = workout.details;
+                    workoutContent.appendChild(workoutText);
+
+                    workoutDiv.appendChild(workoutContent);
+                    dayCard.appendChild(workoutDiv);
                 });
+                dailyWorkoutsContainer.appendChild(dayCard);
             });
-            return totals;
-        }
 
-        function createDisciplineChart() {
-            const ctx = document.getElementById('disciplineChart').getContext('2d');
-            const totals = calculateDisciplineTotals();
-            // Destroy existing chart instance if it exists to prevent rendering issues on updates
-            if (Chart.getChart(ctx)) {
-                Chart.getChart(ctx).destroy();
-            }
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Swim', 'Bike', 'Run', 'Strength'],
-                    datasets: [{
-                        label: 'Minutes per Discipline',
-                        data: [totals.Swim, totals.Bike, totals.Run, totals.Strength],
-                        backgroundColor: [
-                            'rgba(8, 145, 178, 0.8)', /* cyan-600 */
-                            'rgba(2, 83, 100, 0.8)',  /* cyan-800 */
-                            'rgba(22, 163, 74, 0.8)', /* green-600 */
-                            'rgba(71, 85, 105, 0.8)'  /* slate-600 */
-                        ],
-                        borderColor: '#ffffff',
-                        borderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: {
-                                    size: 14
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed !== null) {
-                                        label += `${context.parsed} minutes`;
-                                    }
-                                    return label;
-                                }
-                            },
-                            bodyFont: {
-                                size: 14
-                            }
-                        }
-                    }
+            // Update active state of week navigation buttons
+            document.querySelectorAll('.week-button').forEach(button => {
+                if (parseInt(button.dataset.week) === weekNumber) {
+                    // Active button styling
+                    button.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'scale-105');
+                    button.classList.remove('bg-gray-600', 'text-gray-200', 'hover:bg-gray-500');
+                } else {
+                    // Inactive button styling
+                    button.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'scale-105');
+                    button.classList.add('bg-gray-600', 'text-gray-200', 'hover:bg-gray-500');
                 }
             });
         }
 
-        function createDailyLoadChart() {
-            const ctx = document.getElementById('dailyLoadChart').getContext('2d');
-            const dailyTotals = days.map(day => trainingData[day].totalMinutes);
-            // Destroy existing chart instance if it exists to prevent rendering issues on updates
-            if (Chart.getChart(ctx)) {
-                Chart.getChart(ctx).destroy();
+        // Initialize week navigation buttons
+        function createWeekNavigation() {
+            for (let i = 1; i <= trainingPlan.length; i++) {
+                const button = document.createElement('button');
+                button.textContent = `Week ${i}`;
+                // Initial button styling
+                button.className = 'week-button px-5 py-2 rounded-full font-semibold transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 bg-gray-600 text-gray-200 hover:bg-gray-500';
+                button.dataset.week = i;
+                button.addEventListener('click', () => renderWeek(i));
+                weekNav.appendChild(button);
             }
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: days.map(d => d.substring(0,3)),
-                    datasets: [{
-                        label: 'Total Training Minutes',
-                        data: dailyTotals,
-                        backgroundColor: 'rgba(8, 145, 178, 0.7)',
-                        borderColor: 'rgba(8, 145, 178, 1)',
-                        borderWidth: 1,
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(203, 213, 225, 0.5)'
-                            },
-                            ticks: {
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            bodyFont: {
-                                size: 14
-                            }
-                        }
-                    }
-                }
-            });
         }
 
+        // Initial render on page load
         document.addEventListener('DOMContentLoaded', () => {
-            renderTabs();
-            renderWorkouts();
-            setupTabListener();
-            setupWorkoutCardListener();
-            createDisciplineChart();
-            createDailyLoadChart();
+            createWeekNavigation();
+            renderWeek(currentWeek); // Render Week 1 initially
         });
     </script>
-
 </body>
 </html>
+�
